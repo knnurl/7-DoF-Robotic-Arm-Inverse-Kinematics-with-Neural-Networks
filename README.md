@@ -1,50 +1,117 @@
 # 7-DoF Robotic Arm Inverse Kinematics with Neural Networks
 
-This project solves inverse kinematics (IK) for the KUKA LBR iiwa 7 R800, a 7-DoF arm, in ROS and Gazebo. Given a target end-effector position (x, y, z), it finds the seven joint angles that reach it in two ways:
+This project uses machine learning and optimisation algorithms to solve inverse kinematics (IK) for the KUKA LBR iiwa 7 R800, a 7-DoF arm. Given a target end-effector position (x, y, z), it finds the seven joint angles that reach it. The project runs in ROS Noetic and Gazebo. It was a master's course project at the University of Salford in 2023.
 
-- **Learned models.** A model trained on a dataset of poses predicts the joint angles directly. The models are a recurrent neural network and an SVR.
-- **Optimisation.** A search runs over joint space and minimises the distance between the target and the forward-kinematics position. The methods are simulated annealing, differential evolution, a genetic algorithm, particle swarm optimisation and gradient descent.
-
-In each case the solution goes to the simulated arm through the `FollowJointTrajectory` action, so the arm moves to the goal in Gazebo.
-
-The method and results are written up in [the paper](docs/Paper%20-%20Enhancing%207DoF%20Inverse%20Kinematics.pdf). It also covers models that are not in the ROS scripts: feedforward networks, LSTM, random forest and decision tree.
+The full write-up is in the paper [*Enhancing 7-DOF Robotic Arm Inverse Kinematics: A Machine Learning and Optimization Approach*](Paper%20-%20Enhancing%207DoF%20Inverse%20Kinematics.pdf) (K. Ural, University of Salford).
 
 ## Demonstrations
 
-| Video | Shows |
+The previews run at 8× speed. Click one to download the full video.
+
+**Pre-trained RNN in the loop.** The RNN predicts joint angles for a random target, and the arm moves there in Gazebo.
+
+[![RNN demonstration](docs/media/IK_RNN_Demonstration.gif)](https://github.com/knnurl/7-DoF-Robotic-Arm-Inverse-Kinematics-with-Neural-Networks/releases/download/demo-videos/IK_RNN_Demonstration.mp4)
+
+**Optimisation interface.** You choose an algorithm, it solves for a random target, and the arm moves to the solution.
+
+[![Optimisation interface demonstration](docs/media/OptimizationInterfaceDemonstration.gif)](https://github.com/knnurl/7-DoF-Robotic-Arm-Inverse-Kinematics-with-Neural-Networks/releases/download/demo-videos/OptimizationInterfaceDemonstration.mp4)
+
+## Approach
+
+### Robot and kinematics
+
+The arm is modelled with the Denavit–Hartenberg convention. The parameters below were checked against the arm's movement in Gazebo, and the forward kinematics used by the optimisers is built from them.
+
+| Joint | θ | d (m) | a | α (°) | Limit |
+|---|---|---|---|---|---|
+| 1 | q1 | 0.34 | 0 | −90 | ±170° |
+| 2 | q2 | 0 | 0 | 90 | ±120° |
+| 3 | q3 | 0.4 | 0 | 90 | ±170° |
+| 4 | q4 | 0 | 0 | −90 | ±120° |
+| 5 | q5 | 0.4 | 0 | −90 | ±170° |
+| 6 | q6 | 0 | 0 | 90 | ±120° |
+| 7 | q7 | 0.126 | 0 | 0 | ±175° |
+
+### Dataset
+
+MoveIt drove the simulated iiwa 7 through sequential and random movements in Gazebo, and rosbag recorded two streams:
+
+- **Joint angles** from the iiwa controller (`joint_states`, 100 Hz)
+- **End-effector position**, which is link 7's position extracted from Gazebo's `link_states` (1000 Hz)
+
+The two streams were synchronised on their timestamps with pandas. The result is [`gazebo_dataset_synced.csv`](src/arm_to_goal/scripts/gazebo_dataset_synced.csv), with about 96,000 rows of `x, y, z, theta0 … theta6`. The data was split 70% for training, 15% for validation and 15% for testing, and scaled with `StandardScaler` or `MinMaxScaler` depending on the model. [`src/notebooks/gazebo_extract_xyz&angles.ipynb`](src/notebooks/gazebo_extract_xyz&angles.ipynb) does the extraction and synchronisation.
+
+### Learned models: position in, joint angles out
+
+| Model | Configuration |
 |---|---|
-| [IK_RNN_Demonstration.mp4](mp4s/IK_RNN_Demonstration.mp4) | The pre-trained RNN predicting joint angles for random targets, with the arm moving in Gazebo |
-| [OptimizationInterfaceDemonstration.mp4](mp4s/OptimizationInterfaceDemonstration.mp4) | The interactive interface for choosing an optimisation algorithm |
+| Feedforward NN (ReLU) | Dense 300-300-300-128-32 with ReLU and a linear output; SGD (lr 0.017, momentum 0.9); MSE loss |
+| Feedforward NN (tanh) | The same network with tanh activations, to compare activation functions |
+| Recurrent NN | SimpleRNN with 128 units (ReLU), then Dense 128 (ReLU), Dense 32 (linear) and a 7-unit output; Adam; MSE loss; 200 epochs |
+| LSTM | The same architecture with LSTM cells; SGD (lr 0.01, momentum 0.9); 60 epochs |
+| Random forest | 20 trees, out-of-bag scoring |
+| Decision tree | `max_depth=18`, `min_samples_leaf=15` |
+| SVR | RBF kernel, C = 100, ε = 0.1, wrapped in `MultiOutputRegressor` (one SVR per joint) |
+
+### Optimisation: search joint space for the target
+
+Each optimiser minimises the Euclidean distance between the target and the forward-kinematics position of a candidate set of joint angles, with each joint kept within its limits.
+
+| Algorithm | Configuration |
+|---|---|
+| Genetic algorithm | Population 80, 1200 generations; selection, crossover and mutation |
+| Differential evolution | Population 90, 1000 generations |
+| Particle swarm | Global-best PSO, using [PySwarms](https://github.com/ljvmiranda921/pyswarms) |
+| Gradient descent | Gradient from finite differences, with a fixed learning rate |
+| Simulated annealing | Cooling schedule, with Metropolis acceptance P = e^(−ΔE/T) |
+
+These are the paper's settings. In `ros_optimization_interface.py`, differential evolution uses a population of 100 for 600 generations, and PSO uses c1 = c2 = 1.5 and w = 0.5.
+
+## Results
+
+These are the learned models' metrics on the test set, as reported in Table II of the paper.
+
+| Model | MAE | MSE | RMSE | R² | Explained variance |
+|---|---|---|---|---|---|
+| FNN (ReLU) | 0.1621 | 0.0136 | 0.1166 | 0.8833 | 0.8842 |
+| FNN (tanh) | 0.1629 | 0.0148 | 0.1216 | 0.8794 | 0.8798 |
+| RNN | 0.0406 | 0.0048 | <0.001 | 0.764 | 0.6705 |
+| LSTM | 0.1101 | 0.0181 | 0.1345 | 0.2909 | 0.4327 |
+| Random forest | **0.0045** | 0.0049 | <0.001 | **0.9991** | **0.9993** |
+| Decision tree | 0.0881 | 0.1315 | 0.3493 | 0.9896 | 0.9687 |
+| SVR | 0.5140 | 0.9440 | 0.9500 | 0.9250 | 0.733 |
+
+The random forest fits best overall. The RNN has the second-lowest MAE, and the LSTM explains the least variance.
+
+The paper compares the optimisers by their convergence curves. Gradient descent and differential evolution converge smoothly. PSO drops quickly and then levels off. Simulated annealing improves sharply at high temperature and settles as it cools. The genetic algorithm's best score swings widely, which suggests it is sensitive to its initial population and settings.
 
 ## Repository layout
 
 ```
-mp4s/                     demonstration videos
-docs/                     paper, and rostopic commands for moving the arms by hand
-src/                      catkin workspace src/ (ROS Noetic)
-  arm_to_goal/            IK scripts, the pre-trained RNN and the dataset
-  iiwa_stack/             KUKA iiwa description, Gazebo, control and MoveIt packages (based on IFL-CAMP/iiwa_stack)
-  mob_man_7/              mobile manipulator: iiwa 7 on a mobile base
+Paper - Enhancing 7DoF Inverse Kinematics.pdf
+docs/                       rostopic commands for moving the arms by hand; demo previews in docs/media/
+src/                        catkin workspace src/ (ROS Noetic)
+  arm_to_goal/              ROS IK scripts, the pre-trained RNN and SVR, and the dataset
+  iiwa_stack/               KUKA iiwa description, Gazebo, control and MoveIt packages (from IFL-CAMP/iiwa_stack)
+  mob_man_7/                mobile manipulator: iiwa 7 on a mobile base
   mobile_manipulator_body/  mobile base description
-  notebooks/              notebook that turns Gazebo recordings into the dataset
-  .rosinstall             upstream MoveIt and related packages, pinned to the commits used
+  notebooks/                notebook that builds the dataset from the Gazebo recordings
+  .rosinstall               upstream MoveIt and related packages, pinned to the commits used
 ```
 
-### Scripts in `src/arm_to_goal/scripts/`
+### ROS scripts in `src/arm_to_goal/scripts/`
 
-| Script | What it does |
+Each script solves for a random target in the workspace and sends the joint angles to the arm through the `FollowJointTrajectory` action.
+
+| Script | Solver |
 |---|---|
-| `ros_optimization_interface.py` | Menu-driven: picks a random target, solves it with the algorithm you choose (SA, DE, GA, PSO or gradient descent) and moves the arm. It can also send the arm home. |
-| `send_goal_to_kuka_RNN.py` | Predicts joint angles with `rnn_model.h5` and moves the arm |
-| `send_goal_to_kuka_SVR.py` | The same with support vector regression. It loads `multi_output_svr.joblib` from the working directory, and that 13 MB model file is not in this repository. |
-| `send_goal_to_kuka_SA.py`, `send_goal_to_kuka_GA.py` | The same with simulated annealing or a genetic algorithm on its own |
-| `send_goal_to_kuka_home.py` | Sends the arm to its zero position |
+| `ros_optimization_interface.py` | Menu: simulated annealing, differential evolution, genetic algorithm, PSO or gradient descent; can also send the arm home |
+| `send_goal_to_kuka_RNN.py` | The pre-trained RNN (`rnn_model.h5`) |
+| `send_goal_to_kuka_SVR.py` | The pre-trained SVR (`multi_output_svr.joblib`) |
+| `send_goal_to_kuka_SA.py`, `send_goal_to_kuka_GA.py` | Simulated annealing or the genetic algorithm on its own |
+| `send_goal_to_kuka_home.py` | None; it sends the arm to the zero position |
 
-### Dataset
-
-`src/arm_to_goal/scripts/gazebo_dataset_synced.csv` has about 96,000 rows. Each row gives an end-effector position (`x, y, z`) and the joint angles that produced it (`theta0`–`theta6`). The positions come from the forward kinematics of joint angles recorded in Gazebo, and they were checked against the simulation. [`src/notebooks/gazebo_extract_xyz&angles.ipynb`](src/notebooks/gazebo_extract_xyz&angles.ipynb) builds the dataset from the recordings.
-
-The raw rosbag recordings (about 700 MB) are not included because they exceed GitHub's file size limit.
+The FNN, LSTM, random forest and decision tree were evaluated offline only and have no ROS script. The raw rosbag recordings (about 700 MB) are not included because they exceed GitHub's file size limit.
 
 ## Setup
 
@@ -62,8 +129,10 @@ rosdep install --from-paths src --ignore-src -r -y
 catkin build                       # or catkin_make
 source devel/setup.bash
 
-pip3 install numpy pandas scikit-learn tensorflow keras pyswarms matplotlib
+pip3 install numpy pandas scikit-learn==1.2.2 joblib tensorflow keras pyswarms matplotlib
 ```
+
+`multi_output_svr.joblib` was saved with scikit-learn 1.2.2. Other versions may warn when they load it, or fail to load it.
 
 ## Running
 
@@ -73,19 +142,19 @@ Start the iiwa 7 in Gazebo with the position trajectory controller:
 roslaunch iiwa_gazebo iiwa_gazebo.launch model:=iiwa7
 ```
 
-In a second terminal, run a solver from the `arm_to_goal` package directory. The scripts load the model and dataset by relative path (`scripts/...`), so they must be started from that directory:
+In a second terminal, run a solver from the `arm_to_goal` package directory. The scripts load the models and the dataset by relative path (`scripts/...`), so they must be started from that directory:
 
 ```bash
 cd ~/ik_ws/src/arm_to_goal
 python3 scripts/ros_optimization_interface.py   # choose an optimisation algorithm
 python3 scripts/send_goal_to_kuka_RNN.py        # pre-trained RNN
+python3 scripts/send_goal_to_kuka_SVR.py        # pre-trained SVR
 ```
 
-The scripts send goals to `/iiwa/PositionJointInterface_trajectory_controller/follow_joint_trajectory`. To move the arm by hand with `rostopic pub`, see [docs/arm_control_commands.md](docs/arm_control_commands.md).
+The goals go to `/iiwa/PositionJointInterface_trajectory_controller/follow_joint_trajectory`. To move the arm by hand with `rostopic pub`, see [docs/arm_control_commands.md](docs/arm_control_commands.md).
 
 ## Credits
 
+- Kaan Ural, School of Computing, Science and Engineering, University of Salford, as a master's course project (2023). Supervised by Dr Salem Ameen and Prof Mary He.
+- The iiwa model and `iiwa_stack` come from [IFL-CAMP/iiwa_stack](https://github.com/IFL-CAMP/iiwa_stack) (TU Munich; BSD-2-Clause, see `src/iiwa_stack/LICENSE`).
 - The `move_robot_arm` action-client code is adapted from [Automatic Addison](https://automaticaddison.com).
-- `iiwa_stack` is based on [IFL-CAMP/iiwa_stack](https://github.com/IFL-CAMP/iiwa_stack) (BSD-2-Clause, see `src/iiwa_stack/LICENSE`).
-
-Author: Kaan Ural, University of Salford.

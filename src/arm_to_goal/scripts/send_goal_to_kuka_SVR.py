@@ -34,7 +34,7 @@ from sklearn.multioutput import MultiOutputRegressor
 from sklearn.pipeline import make_pipeline
 
 from joblib import load
-multi_output_svr_loaded = load('multi_output_svr.joblib')
+multi_output_svr_loaded = load('scripts/multi_output_svr.joblib')
 
 df = pd.read_csv('gazebo_dataset_synced.csv')
 y = df.iloc[:,4:]
