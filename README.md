@@ -1,8 +1,8 @@
 # 7-DoF Robotic Arm Inverse Kinematics with Neural Networks
 
-This project uses machine learning and optimisation algorithms to solve inverse kinematics (IK) for the KUKA LBR iiwa 7 R800, a 7-DoF arm. Given a target end-effector position (x, y, z), it finds the seven joint angles that reach it. The project runs in ROS Noetic and Gazebo. It was a master's course project at the University of Salford in 2023.
+This project uses machine learning and optimisation algorithms to solve inverse kinematics (IK) for the KUKA LBR iiwa 7 R800, a 7-DoF arm. Given a target end-effector position (x, y, z), it finds the seven joint angles that reach it. The project runs in ROS Noetic and Gazebo. It was a master's course project at the University of Salford in 2024.
 
-The full write-up is in the paper [*Enhancing 7-DOF Robotic Arm Inverse Kinematics: A Machine Learning and Optimization Approach*](Paper%20-%20Enhancing%207DoF%20Inverse%20Kinematics.pdf) (K. Ural, University of Salford).
+The full write-up is in the paper [*Enhancing 7-DOF Robotic Arm Inverse Kinematics: A Machine Learning and Optimization Approach*](Paper%20-%20Enhancing%207DoF%20Inverse%20Kinematics.pdf) (K. Ural, University of Salford, 2024).
 
 ## Demonstrations
 
@@ -155,6 +155,6 @@ The goals go to `/iiwa/PositionJointInterface_trajectory_controller/follow_joint
 
 ## Credits
 
-- Kaan Ural, School of Computing, Science and Engineering, University of Salford, as a master's course project (2023). Supervised by Dr Salem Ameen and Prof Mary He.
+- Kaan Ural, School of Computing, Science and Engineering, University of Salford, as a master's course project (2024). Supervised by Dr Salem Ameen and Prof Mary He.
 - The iiwa model and `iiwa_stack` come from [IFL-CAMP/iiwa_stack](https://github.com/IFL-CAMP/iiwa_stack) (TU Munich; BSD-2-Clause, see `src/iiwa_stack/LICENSE`).
 - The `move_robot_arm` action-client code is adapted from [Automatic Addison](https://automaticaddison.com).
