@@ -6,15 +6,15 @@ The full write-up is in the paper [*Enhancing 7-DOF Robotic Arm Inverse Kinemati
 
 ## Demonstrations
 
-The previews run at 8× speed. Click one to download the full video.
+The previews run at 8× speed. Click one to watch the full video on YouTube.
 
 **Pre-trained RNN in the loop.** The RNN predicts joint angles for a random target, and the arm moves there in Gazebo.
 
-[![RNN demonstration](docs/media/IK_RNN_Demonstration.gif)](https://github.com/knnurl/7-DoF-Robotic-Arm-Inverse-Kinematics-with-Neural-Networks/releases/download/demo-videos/IK_RNN_Demonstration.mp4)
+[![RNN demonstration](docs/media/IK_RNN_Demonstration.gif)](https://www.youtube.com/watch?v=oNOpLSOW1oE)
 
 **Optimisation interface.** You choose an algorithm, it solves for a random target, and the arm moves to the solution.
 
-[![Optimisation interface demonstration](docs/media/OptimizationInterfaceDemonstration.gif)](https://github.com/knnurl/7-DoF-Robotic-Arm-Inverse-Kinematics-with-Neural-Networks/releases/download/demo-videos/OptimizationInterfaceDemonstration.mp4)
+[![Optimisation interface demonstration](docs/media/OptimizationInterfaceDemonstration.gif)](https://www.youtube.com/watch?v=qeP7brktsMY)
 
 ## Approach
 
@@ -95,9 +95,28 @@ src/                        catkin workspace src/ (ROS Noetic)
   iiwa_stack/               KUKA iiwa description, Gazebo, control and MoveIt packages (from IFL-CAMP/iiwa_stack)
   mob_man_7/                mobile manipulator: iiwa 7 on a mobile base
   mobile_manipulator_body/  mobile base description
-  notebooks/                notebook that builds the dataset from the Gazebo recordings
+  notebooks/                dataset preparation, and a training/evaluation notebook for every model and optimiser
   .rosinstall               upstream MoveIt and related packages, pinned to the commits used
 ```
+
+### Notebooks in `src/notebooks/`
+
+The models and optimisers were developed and evaluated in these notebooks, and the outputs are saved in them.
+
+| Notebook | Contents |
+|---|---|
+| `gazebo_extract_xyz&angles.ipynb` | Extracts link 7's position and the joint angles from the recordings and syncs them |
+| `merge_several_datasets.ipynb` | Concatenates datasets from several recordings |
+| `KUKA_FNN.ipynb` | Feedforward network (ReLU and tanh) |
+| `KUKA_RNN.ipynb`, `KUKA_RNN_save.ipynb` | Recurrent network; the `_save` version exports the model used by the ROS script |
+| `KUKA_LTSM.ipynb` | LSTM |
+| `KUKA_RFR.ipynb` | Random forest regression |
+| `KUKA_DT.ipynb` | Decision tree regression |
+| `KUKA_SVR.ipynb` | SVR; exports `multi_output_svr.joblib` |
+| `Kuka_GA.ipynb`, `KUKA_DE.ipynb`, `KUKA_PSO.ipynb`, `KUKA_GD.ipynb`, `KUKA_SA.ipynb` | Genetic algorithm, differential evolution, particle swarm, gradient descent and simulated annealing |
+| `KUKA_Arm_OptimizationAlgorithms.ipynb` | All the optimisers in one notebook |
+
+The notebooks load their dataset from the working directory. The RNN and decision tree use `gazebo_dataset_synced.csv`, which is in `src/arm_to_goal/scripts/`. The FNN, LSTM, random forest and SVR were trained on larger merged datasets (`gazebo_full_dataset_synced.csv` and `gazebo_full+_dataset_synced.csv`), which are not in this repository.
 
 ### ROS scripts in `src/arm_to_goal/scripts/`
 
