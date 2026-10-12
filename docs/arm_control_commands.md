@@ -1,0 +1,36 @@
+# Arm control commands
+
+These `rostopic pub` commands move the arms by hand. The first two are for the 5-joint mobile manipulator arm, and the rest are for the KUKA iiwa.
+
+```text
+Ros contoller arm control
+
+rostopic pub /arm_controller/command trajectory_msgs/JointTrajectory '{joint_names: ["arm_base_joint","shoulder_joint", "bottom_wrist_joint", "elbow_joint","top_wrist_joint"], points: [{positions: [-0.1, 0.5, 0.02, 0, 0], time_from_start: [1,0]}]}' -1
+
+back to center
+rostopic pub /arm_controller/command trajectory_msgs/JointTrajectory '{joint_names: ["arm_base_joint","shoulder_joint", "bottom_wrist_joint", "elbow_joint","top_wrist_joint"], points: [{positions: [0, 0, 0, 0, 0], time_from_start: [1,0]}]}' -1
+
+
+rostopic pub /iiwa/PositionJointInterface_trajectory_controller/command trajectory_msgs/JointTrajectory '{joint_names: ["iiwa_joint_1","iiwa_joint_2", "iiwa_joint_3", "iiwa_joint_4","iiwa_joint_5", "iiwa_joint_6","iiwa_joint_7"], points: [{positions: [0, 0, 0, 0, 0], time_from_start: [1,0]}]}' -1
+
+
+
+KUKA
+rostopic pub /iiwa/PositionJointInterface_trajectory_controller/command trajectory_msgs/JointTrajectory '{joint_names: ["iiwa_joint_1","iiwa_joint_2", "iiwa_joint_3", "iiwa_joint_4","iiwa_joint_5", "iiwa_joint_6","iiwa_joint_7"], points: [{positions: [0.5, 1, -0.7, 1.57, 0, 1, 0], time_from_start: [1,0]}]}' -1
+
+KUKA back to center
+rostopic pub /iiwa/PositionJointInterface_trajectory_controller/command trajectory_msgs/JointTrajectory '{joint_names: ["iiwa_joint_1","iiwa_joint_2", "iiwa_joint_3", "iiwa_joint_4","iiwa_joint_5", "iiwa_joint_6","iiwa_joint_7"], points: [{positions: [0, 0, 0, 0, 0, 0, 0], time_from_start: [1,0]}]}' -1
+
+
+point[0]: positions: [1.1, 0.4, 1.2, 0.3, -0.3, 0.0, 0.0]
+point[1]:
+  velocities: [1.2, 0.4, 1.2, 0.3, -0.3, 0.0, 0.0]
+point[2]:
+  effort: [1.3, 0.4, 1.2, 0.3, -0.3, 0.0, 0.0]
+  
+  point[0]: positions: [1.1, 0.4, 1.2, 0.3, -0.3, 0.0, 0.0],[1.2, 0.4, 1.2, 0.3, -0.3, 0.0, 0.0],[1.3, 0.4, 1.2, 0.3, -0.3, 0.0, 0.0]
+point[1]:
+  velocities: [1.2, 0.4, 1.2, 0.3, -0.3, 0.0, 0.0]
+point[2]:
+  effort: [1.3, 0.4, 1.2, 0.3, -0.3, 0.0, 0.0]
+```

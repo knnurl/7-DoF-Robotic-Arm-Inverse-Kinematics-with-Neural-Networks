@@ -1,0 +1,40 @@
+- git:
+    local-name: geometric_shapes
+    uri: https://github.com/ros-planning/geometric_shapes.git
+    version: 3e4fede08f3f6dc48e8b1ff60f83d5e5c92a07d4
+- git:
+    local-name: moveit
+    uri: https://github.com/ros-planning/moveit.git
+    version: e7f8a82814b860e0553b193ba3dd57fa10121c76
+- git:
+    local-name: moveit_msgs
+    uri: https://github.com/ros-planning/moveit_msgs.git
+    version: 9756797dcbc293c7cae66541a7bc0c7acec85892
+- git:
+    local-name: moveit_resources
+    uri: https://github.com/ros-planning/moveit_resources.git
+    version: 624d64136a1d4e9176f1d70373f846c2af1ca7e9
+- git:
+    local-name: moveit_tutorials
+    uri: https://github.com/ros-planning/moveit_tutorials.git
+    version: 3bf8de6a0ee2d2a5d4f62953e0dc3cac58cc7827
+- git:
+    local-name: moveit_visual_tools
+    uri: https://github.com/ros-planning/moveit_visual_tools.git
+    version: 7e96c320de694b49f5b1443503034411bcbb0235
+- git:
+    local-name: panda_moveit_config
+    uri: https://github.com/ros-planning/panda_moveit_config.git
+    version: da3252e54327d5b22aac6f1b1be2de75691e5def
+- git:
+    local-name: rviz_visual_tools
+    uri: https://github.com/PickNikRobotics/rviz_visual_tools
+    version: 8703caf0d994e346487748afdafd7c85b845031c
+- git:
+    local-name: srdfdom
+    uri: https://github.com/ros-planning/srdfdom
+    version: 28970e17e1833df1197f2eef73d3deb65d0909b2
+- git:
+    local-name: urdf_tutorial
+    uri: https://github.com/ros/urdf_tutorial.git
+    version: faa44cc37919ece61663a01da860446097ef84f3

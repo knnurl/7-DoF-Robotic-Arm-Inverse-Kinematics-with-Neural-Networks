@@ -1,0 +1,14 @@
+# catkin
+build/
+devel/
+logs/
+.catkin_tools/
+
+# Python
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# Raw recordings, too large for GitHub
+*.bag
+gazebo-link_states.csv
