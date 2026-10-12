@@ -177,3 +177,7 @@ The goals go to `/iiwa/PositionJointInterface_trajectory_controller/follow_joint
 - Kaan Ural, School of Computing, Science and Engineering, University of Salford, as a master's course project (2024). Supervised by Dr Salem Ameen and Prof Mary He.
 - The iiwa model and `iiwa_stack` come from [IFL-CAMP/iiwa_stack](https://github.com/IFL-CAMP/iiwa_stack) (TU Munich; BSD-2-Clause, see `src/iiwa_stack/LICENSE`).
 - The `move_robot_arm` action-client code is adapted from [Automatic Addison](https://automaticaddison.com).
+
+## Use of AI
+
+The project was developed in 2024 without AI tools: the ROS scripts, notebooks, trained models, dataset and paper. In 2026 an AI assistant was used to organise this repository and write this README. The only code change it made was the model path in `send_goal_to_kuka_SVR.py`.
